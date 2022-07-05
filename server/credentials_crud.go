@@ -6,19 +6,30 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-var db = map[string]string{
-	"api_key":  "abcdefghijk",
-	"api_key1": "abcdefghijk",
-	"api_key2": "abcdefghijk",
-	"api_key3": "abcdefghijk",
-	"api_key4": "abcdefghijk",
-}
-
 func getCredentials(c *gin.Context) {
-	c.JSON(http.StatusOK, db)
+	username := c.Param("username")
+	key := c.Param("key")
+	user, err := findUserByUsername(username)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": "User does not exist",
+		})
+		return
+	}
+
+	res, err := getCredentialsFromDb(user.UID, key)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": err.Error(),
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, res)
 }
 
 func setCredentials(c *gin.Context) {
+	username := c.Param("username")
 	data := &Credentials{}
 	err := c.BindJSON(data)
 	if err != nil {
@@ -28,8 +39,22 @@ func setCredentials(c *gin.Context) {
 		return
 	}
 
-	db[data.Key] = data.Value
+	user, err := findUserByUsername(username)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": "User does not exist",
+		})
+		return
+	}
+
+	err = insertCredentialsInDb(user.UID, data.Key, data.Value)
+	if err != nil {
+		c.JSON(http.StatusOK, gin.H{
+			"error": err.Error(),
+		})
+	}
+
 	c.JSON(http.StatusCreated, gin.H{
-		"message": "Successfully added credentials",
+		"message": "Credentials saved successfully",
 	})
 }

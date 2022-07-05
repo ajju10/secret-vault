@@ -15,9 +15,9 @@ func main() {
 
 	apiRouter.Use(verifyTokenMiddleware)
 
-	apiRouter.GET("/credentials/get", getCredentials)
+	apiRouter.GET("/credentials/get/:username/:key", getCredentials)
 
-	apiRouter.POST("/credentials/add", setCredentials)
+	apiRouter.POST("/credentials/add/:username", setCredentials)
 
 	router.Run()
 }

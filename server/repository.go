@@ -55,3 +55,54 @@ func findUserByUsername(username string) (*DbUser, error) {
 	}
 	return &userData, nil
 }
+
+func getCredentialsFromDb(uid, key string) (*Credentials, error) {
+	db, err := sql.Open(Database, DataSource)
+	if err != nil {
+		return nil, err
+	}
+
+	query := fmt.Sprintf(
+		"SELECT cred_key, "+
+			"cred_value "+
+			"FROM KV_Store "+
+			"WHERE "+
+			"BIN_TO_UUID(user_id) = '%s' "+
+			"AND "+
+			"cred_key = '%s' "+
+			"AND "+
+			"destroyed IS NOT TRUE",
+		uid, key,
+	)
+	res := db.QueryRow(query)
+	var queryRes Credentials
+	err = res.Scan(&queryRes.Key, &queryRes.Value)
+	if err != nil {
+		return nil, err
+	}
+
+	return &queryRes, nil
+}
+
+func insertCredentialsInDb(uid, key, value string) error {
+	db, err := sql.Open(Database, DataSource)
+	if err != nil {
+		return err
+	}
+
+	query := fmt.Sprintf(
+		"INSERT INTO KV_Store (id, user_id, cred_key, cred_value) "+
+			"VALUES ("+
+			"UUID_TO_BIN(UUID()),"+
+			"UUID_TO_BIN('%s'),"+
+			"'%s',"+
+			"'%s'"+
+			");", uid, key, value,
+	)
+	_, err = db.Exec(query)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}

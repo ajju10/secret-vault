@@ -19,16 +19,17 @@ func getCredentials(c *gin.Context) {
 }
 
 func setCredentials(c *gin.Context) {
-	data := &SetCredentials{}
+	data := &Credentials{}
 	err := c.BindJSON(data)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
-			"error": "Could not parse request body JSON",
+			"error": "Could not parse request body",
 		})
 		return
 	}
+
 	db[data.Key] = data.Value
-	c.JSON(http.StatusOK, gin.H{
+	c.JSON(http.StatusCreated, gin.H{
 		"message": "Successfully added credentials",
 	})
 }
